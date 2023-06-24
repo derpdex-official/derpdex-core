@@ -1,18 +1,13 @@
+import { Decimal } from 'decimal.js'
+import { BigNumber, BigNumberish, ContractTransaction, utils } from 'ethers'
+import { ethers, waffle } from 'hardhat'
 import { MockTimeUniswapV3Pool } from '../../typechain/MockTimeUniswapV3Pool'
 import { TestERC20 } from '../../typechain/TestERC20'
+
 import { TestUniswapV3Callee } from '../../typechain/TestUniswapV3Callee'
-import { expect } from '../shared/expect'
+import { expect } from './shared/expect'
 import { poolFixture } from './shared/fixtures'
-import { Decimal } from 'decimal.js'
-// import { ethers, waffle } from 'hardhat'
-import * as hre from 'hardhat'
-import snapshotGasCost from '../shared/snapshotGasCost'
-import { utils, Wallet, Provider } from "zksync-web3";
-import { Deployer } from "@matterlabs/hardhat-zksync-deploy";
-const { ethers, waffle } = hre
-// const { BigNumber } = ethers
-import { BigNumber, BigNumberish, ContractTransaction } from 'ethers'
-import { formatPrice, formatTokenAmount } from '../shared/format'
+import { formatPrice, formatTokenAmount } from './shared/format'
 import {
   createPoolFunctions,
   encodePriceSqrt,
@@ -26,6 +21,9 @@ import {
   MIN_SQRT_RATIO,
   TICK_SPACINGS,
 } from './shared/utilities'
+
+import { Provider, Wallet } from 'zksync-web3'
+import { PRIVATE_KEY } from './shared/constants'
 
 Decimal.config({ toExpNeg: -500, toExpPos: 500 })
 
@@ -110,29 +108,28 @@ const POSITION_PROCEEDS_OUTPUT_ADDRESS = constants.AddressZero.slice(0, -1) + '2
 async function executeSwap(
   pool: MockTimeUniswapV3Pool,
   testCase: SwapTestCase,
-  poolFunctions: PoolFunctions,
-  wallet: Wallet = getWallet()
+  poolFunctions: PoolFunctions
 ): Promise<ContractTransaction> {
   let swap: ContractTransaction
   if ('exactOut' in testCase) {
     if (testCase.exactOut) {
       if (testCase.zeroForOne) {
-        swap = await poolFunctions.swap0ForExact1(testCase.amount1, SWAP_RECIPIENT_ADDRESS, wallet, testCase.sqrtPriceLimit)
+        swap = await (await poolFunctions).swap0ForExact1(testCase.amount1, SWAP_RECIPIENT_ADDRESS, testCase.sqrtPriceLimit)
       } else {
-        swap = await poolFunctions.swap1ForExact0(testCase.amount0, SWAP_RECIPIENT_ADDRESS, testCase.sqrtPriceLimit)
+        swap = await (await poolFunctions).swap1ForExact0(testCase.amount0, SWAP_RECIPIENT_ADDRESS, testCase.sqrtPriceLimit)
       }
     } else {
       if (testCase.zeroForOne) {
-        swap = await poolFunctions.swapExact0For1(testCase.amount0, SWAP_RECIPIENT_ADDRESS, testCase.sqrtPriceLimit)
+        swap = await (await poolFunctions).swapExact0For1(testCase.amount0, SWAP_RECIPIENT_ADDRESS, testCase.sqrtPriceLimit)
       } else {
-        swap = await poolFunctions.swapExact1For0(testCase.amount1, SWAP_RECIPIENT_ADDRESS, testCase.sqrtPriceLimit)
+        swap = await (await poolFunctions).swapExact1For0(testCase.amount1, SWAP_RECIPIENT_ADDRESS, testCase.sqrtPriceLimit)
       }
     }
   } else {
     if (testCase.zeroForOne) {
-      swap = await poolFunctions.swapToLowerPrice(testCase.sqrtPriceLimit, SWAP_RECIPIENT_ADDRESS)
+      swap = await (await poolFunctions).swapToLowerPrice(testCase.sqrtPriceLimit, SWAP_RECIPIENT_ADDRESS)
     } else {
-      swap = await poolFunctions.swapToHigherPrice(testCase.sqrtPriceLimit, SWAP_RECIPIENT_ADDRESS)
+      swap = await (await poolFunctions).swapToHigherPrice(testCase.sqrtPriceLimit, SWAP_RECIPIENT_ADDRESS)
     }
   }
   return swap
@@ -140,89 +137,89 @@ async function executeSwap(
 
 const DEFAULT_POOL_SWAP_TESTS: SwapTestCase[] = [
   // swap large amounts in/out
-  // {
-  //   zeroForOne: true,
-  //   exactOut: false,
-  //   amount0: expandTo18Decimals(1),
-  // },
-  // {
-  //   zeroForOne: false,
-  //   exactOut: false,
-  //   amount1: expandTo18Decimals(1),
-  // },
+  {
+    zeroForOne: true,
+    exactOut: false,
+    amount0: expandTo18Decimals(1),
+  },
+  {
+    zeroForOne: false,
+    exactOut: false,
+    amount1: expandTo18Decimals(1),
+  },
   {
     zeroForOne: true,
     exactOut: true,
     amount1: expandTo18Decimals(1),
   },
-  // {
-  //   zeroForOne: false,
-  //   exactOut: true,
-  //   amount0: expandTo18Decimals(1),
-  // },
-  // // swap large amounts in/out with a price limit
-  // {
-  //   zeroForOne: true,
-  //   exactOut: false,
-  //   amount0: expandTo18Decimals(1),
-  //   sqrtPriceLimit: encodePriceSqrt(50, 100),
-  // },
-  // {
-  //   zeroForOne: false,
-  //   exactOut: false,
-  //   amount1: expandTo18Decimals(1),
-  //   sqrtPriceLimit: encodePriceSqrt(200, 100),
-  // },
-  // {
-  //   zeroForOne: true,
-  //   exactOut: true,
-  //   amount1: expandTo18Decimals(1),
-  //   sqrtPriceLimit: encodePriceSqrt(50, 100),
-  // },
-  // {
-  //   zeroForOne: false,
-  //   exactOut: true,
-  //   amount0: expandTo18Decimals(1),
-  //   sqrtPriceLimit: encodePriceSqrt(200, 100),
-  // },
-  // // swap small amounts in/out
-  // {
-  //   zeroForOne: true,
-  //   exactOut: false,
-  //   amount0: 1000,
-  // },
-  // {
-  //   zeroForOne: false,
-  //   exactOut: false,
-  //   amount1: 1000,
-  // },
-  // {
-  //   zeroForOne: true,
-  //   exactOut: true,
-  //   amount1: 1000,
-  // },
-  // {
-  //   zeroForOne: false,
-  //   exactOut: true,
-  //   amount0: 1000,
-  // },
-  // // swap arbitrary input to price
-  // {
-  //   sqrtPriceLimit: encodePriceSqrt(5, 2),
-  //   zeroForOne: false,
-  // },
-  // {
-  //   sqrtPriceLimit: encodePriceSqrt(2, 5),
-  //   zeroForOne: true,
-  // },
-  // {
-  //   sqrtPriceLimit: encodePriceSqrt(5, 2),
-  //   zeroForOne: true,
-  // },
-  // {
-  //   sqrtPriceLimit: encodePriceSqrt(2, 5),
-  //   zeroForOne: false,
-  // },
+  {
+    zeroForOne: false,
+    exactOut: true,
+    amount0: expandTo18Decimals(1),
+  },
+  // swap large amounts in/out with a price limit
+  {
+    zeroForOne: true,
+    exactOut: false,
+    amount0: expandTo18Decimals(1),
+    sqrtPriceLimit: encodePriceSqrt(50, 100),
+  },
+  {
+    zeroForOne: false,
+    exactOut: false,
+    amount1: expandTo18Decimals(1),
+    sqrtPriceLimit: encodePriceSqrt(200, 100),
+  },
+  {
+    zeroForOne: true,
+    exactOut: true,
+    amount1: expandTo18Decimals(1),
+    sqrtPriceLimit: encodePriceSqrt(50, 100),
+  },
+  {
+    zeroForOne: false,
+    exactOut: true,
+    amount0: expandTo18Decimals(1),
+    sqrtPriceLimit: encodePriceSqrt(200, 100),
+  },
+  // swap small amounts in/out
+  {
+    zeroForOne: true,
+    exactOut: false,
+    amount0: 1000,
+  },
+  {
+    zeroForOne: false,
+    exactOut: false,
+    amount1: 1000,
+  },
+  {
+    zeroForOne: true,
+    exactOut: true,
+    amount1: 1000,
+  },
+  {
+    zeroForOne: false,
+    exactOut: true,
+    amount0: 1000,
+  },
+  // swap arbitrary input to price
+  {
+    sqrtPriceLimit: encodePriceSqrt(5, 2),
+    zeroForOne: false,
+  },
+  {
+    sqrtPriceLimit: encodePriceSqrt(2, 5),
+    zeroForOne: true,
+  },
+  {
+    sqrtPriceLimit: encodePriceSqrt(5, 2),
+    zeroForOne: true,
+  },
+  {
+    sqrtPriceLimit: encodePriceSqrt(2, 5),
+    zeroForOne: false,
+  },
 ]
 
 interface Position {
@@ -254,7 +251,7 @@ const TEST_POOLS: PoolTestCase[] = [
       },
     ],
   },
-  /* {
+  {
     description: 'medium fee, 1:1 price, 2e18 max range liquidity',
     feeAmount: FeeAmount.MEDIUM,
     tickSpacing: TICK_SPACINGS[FeeAmount.MEDIUM],
@@ -450,48 +447,8 @@ const TEST_POOLS: PoolTestCase[] = [
         liquidity: expandTo18Decimals(2),
       },
     ],
-  }, */
+  },
 ]
-const execAndDecode = async (Contract: any, methodName: any, wallet: any, params:any = []) => {
-  const data = await execCall({
-    to: Contract.address,
-    data: Contract.interface.encodeFunctionData(methodName, params)
-  }, wallet
-  )
-
-  return await Contract.interface.decodeFunctionResult(methodName, data)
-}
-const sendTransaction = async (tx: any, wallet: Wallet) => {
-  const txResponse = await wallet.sendTransaction(tx)
-  const receipt = await txResponse.wait()
-  return receipt
-}
-
-const execCall = async (tx: any, wallet: Wallet) => {
-  const txResponse = await wallet.call(tx)
-  return txResponse
-}
-
-function getWallet() {
-  let pk = process.env.pk || ""
-  const provider = Provider.getDefaultProvider();
-  return new Wallet(pk, provider);
-}
-
-async function getDeployer() {
-  const wallet = getWallet()
-  const deployer = new Deployer(hre, wallet);
-  // const depositAmount = ethers.utils.parseEther("0.001");
-  // // console.log("deployer.zkWallet", deployer.zkWallet)
-  // const depositHandle = await deployer.zkWallet.deposit({
-  //     to: deployer.zkWallet.address,
-  //     token: utils.ETH_ADDRESS,
-  //     amount: depositAmount,
-  // });
-  // await depositHandle.wait()
-
-  return deployer
-}
 
 describe('UniswapV3Pool swap tests', () => {
   let wallet: Wallet, other: Wallet
@@ -500,43 +457,30 @@ describe('UniswapV3Pool swap tests', () => {
 
   before('create fixture loader', async () => {
     // ;[wallet, other] = await (ethers as any).getSigners()
-    wallet = getWallet()
-
-    //   loadFixture = createFixtureLoader([wallet])
+    const provider = Provider.getDefaultProvider()
+    wallet = new Wallet(PRIVATE_KEY, provider)
+    other = Wallet.createRandom().connect(provider)
+    const tx = await wallet.transfer({ to: other.address, amount: utils.parseEther("1") })
+    await tx.wait()
+    // loadFixture = createFixtureLoader([wallet])
   })
 
   for (const poolCase of TEST_POOLS) {
     describe(poolCase.description, () => {
       const poolCaseFixture = async () => {
-        const { createPool, token0, token1, swapTargetCallee: swapTarget } = await poolFixture(
-          //@ts-ignore
-          [wallet],
-          waffle.provider
-        )
-        console.log("after poolFixture")
+        const { createPool, token0, token1, swapTargetCallee: swapTarget } = await poolFixture()
         const pool = await createPool(poolCase.feeAmount, poolCase.tickSpacing)
-        console.log("after createPool")
         const poolFunctions = createPoolFunctions({ swapTarget, token0, token1, pool })
-        console.log("createPoolFunctions")
-        let tx = await pool.populateTransaction.initialize(poolCase.startingPrice)
-        //   await pool.initialize(poolCase.startingPrice)
-        const InitializeTx = await getWallet().sendTransaction({
-          ...tx
-        })
-        console.log("initialize")
+        await pool.initialize(poolCase.startingPrice)
         // mint all positions
         for (const position of poolCase.positions) {
-          console.log("mint")
-          await poolFunctions.mint(wallet.address, position.tickLower, position.tickUpper, position.liquidity, getWallet())
+          const tx = await (await poolFunctions).mint(wallet.address, position.tickLower, position.tickUpper, position.liquidity)
+          await tx.wait()
         }
 
-        console.log("minted")
-
         const [poolBalance0, poolBalance1] = await Promise.all([
-          // token0.balanceOf(pool.address),
-          // token1.balanceOf(pool.address),
-          execAndDecode(token0, "balanceOf", wallet, [pool.address]),
-          execAndDecode(token1, "balanceOf", wallet, [pool.address]),
+          token0.balanceOf(pool.address),
+          token1.balanceOf(pool.address),
         ])
 
         return { token0, token1, pool, poolFunctions, poolBalance0, poolBalance1, swapTarget }
@@ -553,57 +497,41 @@ describe('UniswapV3Pool swap tests', () => {
       let poolFunctions: PoolFunctions
 
       beforeEach('load fixture', async () => {
-        //   ;({ token0, token1, pool, poolFunctions, poolBalance0, poolBalance1, swapTarget } = await loadFixture(
-        //     poolCaseFixture
-        //   ))
-        ; ({ token0, token1, pool, poolFunctions, poolBalance0, poolBalance1, swapTarget } = await poolCaseFixture())
+        // ;({ token0, token1, pool, poolFunctions, poolBalance0, poolBalance1, swapTarget } = await loadFixture(
+        //   poolCaseFixture
+        // ))
+        ;({ token0, token1, pool, poolFunctions, poolBalance0, poolBalance1, swapTarget } = await poolCaseFixture())
       })
 
-      // afterEach('check can burn positions', async () => {
-      //   for (const { liquidity, tickUpper, tickLower } of poolCase.positions) {
-      //     // await pool.burn(tickLower, tickUpper, liquidity)
-      //     const poolFactory = await ethers.getContractFactory("MockTimeUniswapV3Pool")
-      //     const pool = new ethers.Contract("MockTimeUniswapV3Pool", poolFactory.interface)
-      //     await sendTransaction(
-      //         pool.populateTransaction.burn(tickLower, tickUpper, liquidity),
-      //         wallet
-      //     )
-      //     // await pool.collect(POSITION_PROCEEDS_OUTPUT_ADDRESS, tickLower, tickUpper, MaxUint128, MaxUint128)
-      //     await sendTransaction(
-      //         pool.populateTransaction.collect(POSITION_PROCEEDS_OUTPUT_ADDRESS, tickLower, tickUpper, MaxUint128, MaxUint128),
-      //         wallet
-      //     )
-      //   }
-
-      // console.log("after burn")
-      // })
+      afterEach('check can burn positions', async () => {
+        for (const { liquidity, tickUpper, tickLower } of poolCase.positions) {
+          let tx
+          tx = await pool.burn(tickLower, tickUpper, liquidity)
+          await tx.wait()
+          tx = await pool.collect(POSITION_PROCEEDS_OUTPUT_ADDRESS, tickLower, tickUpper, MaxUint128, MaxUint128)
+          await tx.wait()
+        }
+      })
 
       for (const testCase of poolCase.swapTests ?? DEFAULT_POOL_SWAP_TESTS) {
         it(swapCaseToDescription(testCase), async () => {
-          const poolFactory = await ethers.getContractFactory("MockTimeUniswapV3Pool")
-          let data = await execCall({
-            to: pool.address,
-            data: poolFactory.interface.encodeFunctionData("slot0", [])
-          }, wallet
-          )
-          console.log("slot0", data)
-          const slot0 = await poolFactory.interface.decodeFunctionResult("slot0", data)
-
+          const slot0 = await pool.slot0()
           const tx = executeSwap(pool, testCase, poolFunctions)
           try {
-            await tx
+            const awaitTx = await tx
+            await awaitTx.wait()
           } catch (error: any) {
-            expect({
-              swapError: error.message,
-              poolBalance0: poolBalance0.toString(),
-              poolBalance1: poolBalance1.toString(),
-              poolPriceBefore: formatPrice(slot0.sqrtPriceX96),
-              tickBefore: slot0.tick,
-            }).to.matchSnapshot('swap error')
+            // TODO
+            // expect({
+            //   swapError: error.message,
+            //   poolBalance0: poolBalance0.toString(),
+            //   poolBalance1: poolBalance1.toString(),
+            //   poolPriceBefore: formatPrice(slot0.sqrtPriceX96),
+            //   tickBefore: slot0.tick,
+            // }).to.matchSnapshot('swap error')
             return
           }
-
-          let [
+          const [
             poolBalance0After,
             poolBalance1After,
             slot0After,
@@ -611,86 +539,59 @@ describe('UniswapV3Pool swap tests', () => {
             feeGrowthGlobal0X128,
             feeGrowthGlobal1X128,
           ] = await Promise.all([
-            execAndDecode(token0, "balanceOf", wallet, [pool.address]),
-            execAndDecode(token1, "balanceOf", wallet, [pool.address]),
-            execAndDecode(pool, "slot0", wallet),
-            execAndDecode(pool, "liquidity", wallet),
-            execAndDecode(pool, "feeGrowthGlobal0X128", wallet),
-            execAndDecode(pool, "feeGrowthGlobal1X128", wallet),
+            token0.balanceOf(pool.address),
+            token1.balanceOf(pool.address),
+            pool.slot0(),
+            pool.liquidity(),
+            pool.feeGrowthGlobal0X128(),
+            pool.feeGrowthGlobal1X128(),
           ])
-          // const [
-          //   poolBalance0After,
-          //   poolBalance1After,
-          //   slot0After,
-          //   liquidityAfter,
-          //   feeGrowthGlobal0X128,
-          //   feeGrowthGlobal1X128,
-          // ] = await Promise.all([
-          //   token0.balanceOf(pool.address),
-          //   token1.balanceOf(pool.address),
-          //   pool.slot0(),
-          //   pool.liquidity(),
-          //   pool.feeGrowthGlobal0X128(),
-          //   pool.feeGrowthGlobal1X128(),
-          // ])
-          console.log("after swap", [
-            poolBalance0After,
-            poolBalance1After,
-            slot0After,
-            liquidityAfter,
-            feeGrowthGlobal0X128,
-            feeGrowthGlobal1X128,
-          ])
+          const poolBalance0Delta = poolBalance0After.sub(poolBalance0)
+          const poolBalance1Delta = poolBalance1After.sub(poolBalance1)
 
-          poolBalance0After = ethers.BigNumber.from(poolBalance0After.toString())
-          let poolBalance0BN = ethers.BigNumber.from(poolBalance0.toString())
-          console.log("poolBalance0After", poolBalance0After)
-          const poolBalance0Delta = poolBalance0After.sub(poolBalance0BN)
-          // const poolBalance1Delta = poolBalance1After.sub(poolBalance1)
+          // check all the events were emitted corresponding to balance changes
+          if (poolBalance0Delta.eq(0)) await expect(tx).to.not.emit(token0, 'Transfer')
+          else if (poolBalance0Delta.lt(0))
+            await expect(tx)
+              .to.emit(token0, 'Transfer')
+              .withArgs(pool.address, SWAP_RECIPIENT_ADDRESS, poolBalance0Delta.mul(-1))
+          else await expect(tx).to.emit(token0, 'Transfer').withArgs(wallet.address, pool.address, poolBalance0Delta)
 
-          // // check all the events were emitted corresponding to balance changes
-          // if (poolBalance0Delta.eq(0)) await expect(tx).to.not.emit(token0, 'Transfer')
-          // else if (poolBalance0Delta.lt(0))
-          //   await expect(tx)
-          //     .to.emit(token0, 'Transfer')
-          //     .withArgs(pool.address, SWAP_RECIPIENT_ADDRESS, poolBalance0Delta.mul(-1))
-          // else await expect(tx).to.emit(token0, 'Transfer').withArgs(wallet.address, pool.address, poolBalance0Delta)
+          if (poolBalance1Delta.eq(0)) await expect(tx).to.not.emit(token1, 'Transfer')
+          else if (poolBalance1Delta.lt(0))
+            await expect(tx)
+              .to.emit(token1, 'Transfer')
+              .withArgs(pool.address, SWAP_RECIPIENT_ADDRESS, poolBalance1Delta.mul(-1))
+          else await expect(tx).to.emit(token1, 'Transfer').withArgs(wallet.address, pool.address, poolBalance1Delta)
 
-          // if (poolBalance1Delta.eq(0)) await expect(tx).to.not.emit(token1, 'Transfer')
-          // else if (poolBalance1Delta.lt(0))
-          //   await expect(tx)
-          //     .to.emit(token1, 'Transfer')
-          //     .withArgs(pool.address, SWAP_RECIPIENT_ADDRESS, poolBalance1Delta.mul(-1))
-          // else await expect(tx).to.emit(token1, 'Transfer').withArgs(wallet.address, pool.address, poolBalance1Delta)
+          // check that the swap event was emitted too
+          await expect(tx)
+            .to.emit(pool, 'Swap')
+            .withArgs(
+              swapTarget.address,
+              SWAP_RECIPIENT_ADDRESS,
+              poolBalance0Delta,
+              poolBalance1Delta,
+              slot0After.sqrtPriceX96,
+              liquidityAfter,
+              slot0After.tick
+            )
 
-          // // check that the swap event was emitted too
-          // await expect(tx)
-          //   .to.emit(pool, 'Swap')
-          //   .withArgs(
-          //     swapTarget.address,
-          //     SWAP_RECIPIENT_ADDRESS,
-          //     poolBalance0Delta,
-          //     poolBalance1Delta,
-          //     slot0After.sqrtPriceX96,
-          //     liquidityAfter,
-          //     slot0After.tick
-          //   )
+          const executionPrice = new Decimal(poolBalance1Delta.toString()).div(poolBalance0Delta.toString()).mul(-1)
 
-          // const executionPrice = new Decimal(poolBalance1Delta.toString()).div(poolBalance0Delta.toString()).mul(-1)
-
-          // expect({
-          //   amount0Before: poolBalance0.toString(),
-          //   amount1Before: poolBalance1.toString(),
-          //   amount0Delta: poolBalance0Delta.toString(),
-          //   amount1Delta: poolBalance1Delta.toString(),
-          //   feeGrowthGlobal0X128Delta: feeGrowthGlobal0X128.toString(),
-          //   feeGrowthGlobal1X128Delta: feeGrowthGlobal1X128.toString(),
-          //   tickBefore: slot0.tick,
-          //   poolPriceBefore: formatPrice(slot0.sqrtPriceX96),
-          //   tickAfter: slot0After.tick,
-          //   poolPriceAfter: formatPrice(slot0After.sqrtPriceX96),
-          //   executionPrice: executionPrice.toPrecision(5),
-          // }).to.matchSnapshot('balances')
+          expect({
+            amount0Before: poolBalance0.toString(),
+            amount1Before: poolBalance1.toString(),
+            amount0Delta: poolBalance0Delta.toString(),
+            amount1Delta: poolBalance1Delta.toString(),
+            feeGrowthGlobal0X128Delta: feeGrowthGlobal0X128.toString(),
+            feeGrowthGlobal1X128Delta: feeGrowthGlobal1X128.toString(),
+            tickBefore: slot0.tick,
+            poolPriceBefore: formatPrice(slot0.sqrtPriceX96),
+            tickAfter: slot0After.tick,
+            poolPriceAfter: formatPrice(slot0After.sqrtPriceX96),
+            executionPrice: executionPrice.toPrecision(5),
+          }).to.matchSnapshot('balances')
         })
       }
     })

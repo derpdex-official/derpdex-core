@@ -1,5 +1,6 @@
-artifacts/
-cache/
+artifacts-zk/
+cache-zk/
 crytic-export/
 node_modules/
 typechain/
+.env

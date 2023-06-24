@@ -15,3 +15,19 @@ exports[`BitMath #computeSwapStep gas swap zero for one exact in partial 1`] = `
 exports[`BitMath #computeSwapStep gas swap zero for one exact out capped 1`] = `2873`;
 
 exports[`BitMath #computeSwapStep gas swap zero for one exact out partial 1`] = `4985`;
+
+exports[`SwapMath #computeSwapStep gas swap one for zero exact in capped 1`] = `3551`;
+
+exports[`SwapMath #computeSwapStep gas swap one for zero exact in partial 1`] = `3575`;
+
+exports[`SwapMath #computeSwapStep gas swap one for zero exact out capped 1`] = `2819`;
+
+exports[`SwapMath #computeSwapStep gas swap one for zero exact out partial 1`] = `3575`;
+
+exports[`SwapMath #computeSwapStep gas swap zero for one exact in capped 1`] = `3527`;
+
+exports[`SwapMath #computeSwapStep gas swap zero for one exact in partial 1`] = `4985`;
+
+exports[`SwapMath #computeSwapStep gas swap zero for one exact out capped 1`] = `2873`;
+
+exports[`SwapMath #computeSwapStep gas swap zero for one exact out partial 1`] = `4985`;
