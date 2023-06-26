@@ -9,24 +9,33 @@ import 'hardhat-deploy'
 import "@matterlabs/hardhat-zksync-verify";
 dotenv.config()
 
-
-const zkSyncTestnet =
-  process.env.NODE_ENV == "test"
-    ? {
+const zkSyncNetwork = (() => {
+  if (process.env.NODE_ENV == "local") {
+    return {
       url: "http://localhost:3050",
       ethNetwork: "http://localhost:8545",
       // ethNetwork: "http://localhost:8646",
       zksync: true,
     }
-    : {
+  } else if (process.env.NODE_ENV == "testnet") {
+    return {
       url: "https://testnet.era.zksync.dev",
       // ethNetwork: "goerli",
-      ethNetwork: process.env.mainnet_rpc,
+      ethNetwork: process.env.goerli_rpc,
       zksync: true,
       verifyURL: 'https://zksync2-testnet-explorer.zksync.dev/contract_verification'
-    };
-
-console.log(zkSyncTestnet)
+    }
+  } else if(process.env.NODE_ENV == "mainnet") {
+    return {
+      url: process.env.ZKSYNC_MAINNET_RPC,
+      ethNetwork: process.env.mainnet_rpc,
+      zksync: true,
+      verifyURL: process.env.ZKSYNC_MAINNET_VERIFY_URL
+    }
+  } else {
+    throw new Error("Please use one of the following NODE_ENV (local, testnet, mainnet)")
+  }
+}) ()
 
 export default {
   mocha: {
@@ -37,7 +46,7 @@ export default {
     compilerSource: "binary",
     settings: {},
   },
-  defaultNetwork: "zkSyncTestnet",
+  defaultNetwork: "zkSyncNetwork",
 
   networks: {
     // zkTestnet: {
@@ -45,7 +54,7 @@ export default {
     //   ethNetwork: process.env.mainnet_rpc
     //   zksync: true,
     // },
-    zkSyncTestnet,
+    zkSyncNetwork,
     hardhat: {
       allowUnlimitedContractSize: false,
       zksync: true,
