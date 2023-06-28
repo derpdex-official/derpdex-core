@@ -3,3 +3,8 @@ cache/
 crytic-export/
 node_modules/
 typechain/
+
+cache-zk/
+artifacts-zk/
+
+.env
