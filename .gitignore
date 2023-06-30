@@ -5,4 +5,4 @@ node_modules/
 typechain/
 .env
 .DS_STORE
-__snapshot/
+__snapshots__/

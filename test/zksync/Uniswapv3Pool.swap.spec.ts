@@ -23,7 +23,7 @@ import {
 } from './shared/utilities'
 
 import { Provider, Wallet } from 'zksync-web3'
-import { PRIVATE_KEY } from './shared/constants'
+import { getSigners } from './shared/zkUtils'
 
 Decimal.config({ toExpNeg: -500, toExpPos: 500 })
 
@@ -457,18 +457,14 @@ describe('UniswapV3Pool swap tests', () => {
 
   before('create fixture loader', async () => {
     // ;[wallet, other] = await (ethers as any).getSigners()
-    const provider = Provider.getDefaultProvider()
-    wallet = new Wallet(PRIVATE_KEY, provider)
-    other = Wallet.createRandom().connect(provider)
-    const tx = await wallet.transfer({ to: other.address, amount: utils.parseEther("1") })
-    await tx.wait()
+    ;[wallet, other] = await getSigners()
     // loadFixture = createFixtureLoader([wallet])
   })
 
   for (const poolCase of TEST_POOLS) {
     describe(poolCase.description, () => {
       const poolCaseFixture = async () => {
-        const { createPool, token0, token1, swapTargetCallee: swapTarget } = await poolFixture()
+        const { createPool, token0, token1, swapTargetCallee: swapTarget } = await poolFixture([wallet], Provider.getDefaultProvider())
         const pool = await createPool(poolCase.feeAmount, poolCase.tickSpacing)
         const poolFunctions = createPoolFunctions({ swapTarget, token0, token1, pool })
         await pool.initialize(poolCase.startingPrice)
@@ -521,14 +517,13 @@ describe('UniswapV3Pool swap tests', () => {
             const awaitTx = await tx
             await awaitTx.wait()
           } catch (error: any) {
-            // TODO
-            // expect({
-            //   swapError: error.message,
-            //   poolBalance0: poolBalance0.toString(),
-            //   poolBalance1: poolBalance1.toString(),
-            //   poolPriceBefore: formatPrice(slot0.sqrtPriceX96),
-            //   tickBefore: slot0.tick,
-            // }).to.matchSnapshot('swap error')
+            expect({
+              swapError: error.message,
+              poolBalance0: poolBalance0.toString(),
+              poolBalance1: poolBalance1.toString(),
+              poolPriceBefore: formatPrice(slot0.sqrtPriceX96),
+              tickBefore: slot0.tick,
+            }).to.matchSnapshot('swap error')
             return
           }
           const [

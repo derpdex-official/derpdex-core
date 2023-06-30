@@ -1,12 +1,12 @@
 import { BigNumber } from 'ethers'
-import { ethers } from 'hardhat'
+// import { ethers } from 'hardhat'
 import { TickMathTest } from '../../typechain/TickMathTest'
 import { expect } from './shared/expect'
 import snapshotGasCost from './shared/snapshotGasCost'
 import { encodePriceSqrt, MIN_SQRT_RATIO, MAX_SQRT_RATIO } from './shared/utilities'
 import Decimal from 'decimal.js'
 
-import getContractInstance from './shared/getContractInstance'
+import { getContractFactory } from './shared/zkUtils'
 
 const MIN_TICK = -887272
 const MAX_TICK = 887272
@@ -18,8 +18,8 @@ describe('TickMath', () => {
 
   before('deploy TickMathTest', async () => {
     // const factory = await ethers.getContractFactory('TickMathTest')
-    // tickMath = (await factory.deploy()) as TickMathTest
-    tickMath = (await getContractInstance("TickMathTest")) as TickMathTest
+    const factory = await getContractFactory('TickMathTest')
+    tickMath = (await factory.deploy()) as TickMathTest
   })
 
   describe('#getSqrtRatioAtTick', () => {

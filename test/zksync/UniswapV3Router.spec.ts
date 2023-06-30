@@ -1,13 +1,11 @@
 // import { Wallet } from 'ethers'
-import { ethers, waffle } from 'hardhat'
+// import { ethers, waffle } from 'hardhat'
 import { TestERC20 } from '../../typechain/TestERC20'
 import { UniswapV3Factory } from '../../typechain/UniswapV3Factory'
 import { MockTimeUniswapV3Pool } from '../../typechain/MockTimeUniswapV3Pool'
 import { expect } from './shared/expect'
 
 import { poolFixture } from './shared/fixtures'
-
-import { Provider, Wallet } from 'zksync-web3'
 
 import {
   FeeAmount,
@@ -22,13 +20,14 @@ import {
 } from './shared/utilities'
 import { TestUniswapV3Router } from '../../typechain/TestUniswapV3Router'
 import { TestUniswapV3Callee } from '../../typechain/TestUniswapV3Callee'
-import { PRIVATE_KEY } from './shared/constants'
-import { utils } from 'ethers'
+
+import { Provider, Wallet } from 'zksync-web3'
+import { getSigners } from './shared/zkUtils'
 
 const feeAmount = FeeAmount.MEDIUM
 const tickSpacing = TICK_SPACINGS[feeAmount]
 
-const createFixtureLoader = waffle.createFixtureLoader
+// const createFixtureLoader = waffle.createFixtureLoader
 
 type ThenArg<T> = T extends PromiseLike<infer U> ? U : T
 
@@ -56,11 +55,7 @@ describe('UniswapV3Pool', () => {
 
   before('create fixture loader', async () => {
     // ;[wallet, other] = await (ethers as any).getSigners()
-    const provider = Provider.getDefaultProvider()
-    wallet = new Wallet(PRIVATE_KEY, provider)
-    other = Wallet.createRandom().connect(provider)
-    const tx = await wallet.transfer({ to: other.address, amount: utils.parseEther("1") })
-    await tx.wait()
+    ;[wallet, other] = await getSigners()
     // loadFixture = createFixtureLoader([wallet, other])
   })
 
@@ -68,7 +63,7 @@ describe('UniswapV3Pool', () => {
     // ; ({ token0, token1, token2, factory, createPool, swapTargetCallee, swapTargetRouter } = await loadFixture(
     //   poolFixture
     // ))
-    ; ({ token0, token1, token2, factory, createPool, swapTargetCallee, swapTargetRouter } = await poolFixture())
+    ; ({ token0, token1, token2, factory, createPool, swapTargetCallee, swapTargetRouter } = await poolFixture([wallet], Provider.getDefaultProvider()))
 
     const createPoolWrapped = async (
       amount: number,
@@ -93,14 +88,14 @@ describe('UniswapV3Pool', () => {
       ;[pool1, pool1Functions] = await createPoolWrapped(feeAmount, tickSpacing, token1, token2)
   })
 
-  // it('constructor initializes immutables', async () => {
-  //   expect(await pool0.factory()).to.eq(factory.address)
-  //   expect(await pool0.token0()).to.eq(token0.address)
-  //   expect(await pool0.token1()).to.eq(token1.address)
-  //   expect(await pool1.factory()).to.eq(factory.address)
-  //   expect(await pool1.token0()).to.eq(token1.address)
-  //   expect(await pool1.token1()).to.eq(token2.address)
-  // })
+  it('constructor initializes immutables', async () => {
+    expect(await pool0.factory()).to.eq(factory.address)
+    expect(await pool0.token0()).to.eq(token0.address)
+    expect(await pool0.token1()).to.eq(token1.address)
+    expect(await pool1.factory()).to.eq(factory.address)
+    expect(await pool1.token0()).to.eq(token1.address)
+    expect(await pool1.token1()).to.eq(token2.address)
+  })
 
   describe('multi-swaps', () => {
     let inputToken: TestERC20

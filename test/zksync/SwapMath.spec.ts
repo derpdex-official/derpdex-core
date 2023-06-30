@@ -1,5 +1,5 @@
 import { BigNumber } from 'ethers'
-import { ethers } from 'hardhat'
+// import { ethers } from 'hardhat'
 import { SwapMathTest } from '../../typechain/SwapMathTest'
 
 import { expect } from './shared/expect'
@@ -7,18 +7,18 @@ import snapshotGasCost from './shared/snapshotGasCost'
 import { encodePriceSqrt, expandTo18Decimals } from './shared/utilities'
 import { SqrtPriceMathTest } from '../../typechain/SqrtPriceMathTest'
 
-import getContractInstance from './shared/getContractInstance'
+import { getContractFactory } from './shared/zkUtils'
 
 describe('SwapMath', () => {
   let swapMath: SwapMathTest
   let sqrtPriceMath: SqrtPriceMathTest
   before(async () => {
     // const swapMathTestFactory = await ethers.getContractFactory('SwapMathTest')
+    const swapMathTestFactory = await getContractFactory('SwapMathTest')
     // const sqrtPriceMathTestFactory = await ethers.getContractFactory('SqrtPriceMathTest')
-    // swapMath = (await swapMathTestFactory.deploy()) as SwapMathTest
-    // sqrtPriceMath = (await sqrtPriceMathTestFactory.deploy()) as SqrtPriceMathTest
-    swapMath = (await getContractInstance("SwapMathTest")) as SwapMathTest
-    sqrtPriceMath = (await getContractInstance("SqrtPriceMathTest")) as SqrtPriceMathTest
+    const sqrtPriceMathTestFactory = await getContractFactory('SqrtPriceMathTest')
+    swapMath = (await swapMathTestFactory.deploy()) as SwapMathTest
+    sqrtPriceMath = (await sqrtPriceMathTestFactory.deploy()) as SqrtPriceMathTest
   })
 
   describe('#computeSwapStep', () => {

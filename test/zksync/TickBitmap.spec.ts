@@ -3,15 +3,15 @@ import { TickBitmapTest } from '../../typechain/TickBitmapTest'
 import { expect } from './shared/expect'
 import snapshotGasCost from './shared/snapshotGasCost'
 
-import getContractInstance from './shared/getContractInstance'
+import { getContractFactory } from './shared/zkUtils'
 
 describe('TickBitmap', () => {
   let tickBitmap: TickBitmapTest
 
   beforeEach('deploy TickBitmapTest', async () => {
     // const tickBitmapTestFactory = await ethers.getContractFactory('TickBitmapTest')
-    // tickBitmap = (await tickBitmapTestFactory.deploy()) as TickBitmapTest
-    tickBitmap = (await getContractInstance("TickBitmapTest")) as TickBitmapTest
+    const tickBitmapTestFactory = await getContractFactory('TickBitmapTest')
+    tickBitmap = (await tickBitmapTestFactory.deploy()) as TickBitmapTest
   })
 
   async function initTicks(ticks: number[]): Promise<void> {

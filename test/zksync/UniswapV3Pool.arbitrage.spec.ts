@@ -26,8 +26,7 @@ import {
 } from './shared/utilities'
 
 import { Provider, Wallet } from 'zksync-web3'
-import { PRIVATE_KEY } from './shared/constants'
-import getContractInstance from './shared/getContractInstance'
+import { getContractFactory, getSigners } from './shared/zkUtils'
 
 const {
   constants: { MaxUint256 },
@@ -60,16 +59,11 @@ describe('UniswapV3Pool arbitrage tests', () => {
 
   before('create fixture loader', async () => {
     // ;[wallet, arbitrageur] = await (ethers as any).getSigners()
+    ;[wallet, arbitrageur] = await getSigners()
     // loadFixture = createFixtureLoader([wallet, arbitrageur])
-    const provider = Provider.getDefaultProvider()
-    wallet = new Wallet(PRIVATE_KEY, provider)
-    arbitrageur = Wallet.createRandom().connect(provider)
-    const tx = await wallet.transfer({ to: arbitrageur.address, amount: utils.parseEther("1") })
-    await tx.wait()
   })
 
-  // for (const feeProtocol of [0, 6]) {
-  for (const feeProtocol of [0]) {
+  for (const feeProtocol of [0, 6]) {
     describe(`protocol fee = ${feeProtocol};`, () => {
       const startingPrice = encodePriceSqrt(1, 1)
       const startingTick = 0
@@ -86,7 +80,7 @@ describe('UniswapV3Pool arbitrage tests', () => {
       ]) {
         describe(`passive liquidity of ${formatTokenAmount(passiveLiquidity)}`, () => {
           const arbTestFixture = async ([wallet, arbitrageur]: Wallet[]) => {
-            const fix = await poolFixture()
+            const fix = await poolFixture([wallet], Provider.getDefaultProvider())
 
             const pool = await fix.createPool(feeAmount, tickSpacing)
 
@@ -109,12 +103,12 @@ describe('UniswapV3Pool arbitrage tests', () => {
             })
 
             // const testerFactory = await ethers.getContractFactory('UniswapV3PoolSwapTest')
-            // const tester = (await testerFactory.deploy()) as UniswapV3PoolSwapTest
-            const tester = (await getContractInstance("UniswapV3PoolSwapTest")) as UniswapV3PoolSwapTest
+            const testerFactory = await getContractFactory('UniswapV3PoolSwapTest')
+            const tester = (await testerFactory.deploy()) as UniswapV3PoolSwapTest
 
             // const tickMathFactory = await ethers.getContractFactory('TickMathTest')
-            // const tickMath = (await tickMathFactory.deploy()) as TickMathTest
-            const tickMath = (await getContractInstance("TickMathTest")) as TickMathTest
+            const tickMathFactory = await getContractFactory('TickMathTest')
+            const tickMath = (await tickMathFactory.deploy()) as TickMathTest
 
             tx = await fix.token0.approve(tester.address, MaxUint256)
             await tx.wait()
@@ -386,19 +380,19 @@ describe('UniswapV3Pool arbitrage tests', () => {
                 arbBalance0 = arbBalance0.sub(backrunDelta0)
                 arbBalance1 = arbBalance1.sub(backrunDelta1)
 
-                // expect({
-                //   arbBalanceDelta0: formatTokenAmount(arbBalance0),
-                //   arbBalanceDelta1: formatTokenAmount(arbBalance1),
-                //   profit: {
-                //     final: formatTokenAmount(valueToken1(arbBalance0, arbBalance1)),
-                //   },
-                //   backrun: {
-                //     executionPrice: formatPrice(backrunExecutionPrice),
-                //     delta0: formatTokenAmount(backrunDelta0),
-                //     delta1: formatTokenAmount(backrunDelta1),
-                //   },
-                //   finalPrice: formatPrice((await pool.slot0()).sqrtPriceX96),
-                // }).to.matchSnapshot()
+                expect({
+                  arbBalanceDelta0: formatTokenAmount(arbBalance0),
+                  arbBalanceDelta1: formatTokenAmount(arbBalance1),
+                  profit: {
+                    final: formatTokenAmount(valueToken1(arbBalance0, arbBalance1)),
+                  },
+                  backrun: {
+                    executionPrice: formatPrice(backrunExecutionPrice),
+                    delta0: formatTokenAmount(backrunDelta0),
+                    delta1: formatTokenAmount(backrunDelta1),
+                  },
+                  finalPrice: formatPrice((await pool.slot0()).sqrtPriceX96),
+                }).to.matchSnapshot()
               })
             })
           }

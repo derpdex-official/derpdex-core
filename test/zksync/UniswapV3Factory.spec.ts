@@ -6,14 +6,11 @@ import snapshotGasCost from './shared/snapshotGasCost'
 
 import { FeeAmount, getCreate2Address, TICK_SPACINGS } from './shared/utilities'
 
-const { constants, utils } = ethers
+const { constants } = ethers
 
-import getContractInstance from './shared/getContractInstance'
-import { ContractFactory, Provider, Wallet } from 'zksync-web3'
-import { PRIVATE_KEY } from './shared/constants'
+import { getContractFactory, getContractInstance, getSigners } from './shared/zkUtils'
+import { Wallet } from 'zksync-web3'
 import { Signer } from 'ethers'
-import { Deployer } from '@matterlabs/hardhat-zksync-deploy'
-import * as hre from 'hardhat'
 
 const TEST_ADDRESSES: [string, string] = [
   '0x1000000000000000000000000000000000000000',
@@ -37,19 +34,14 @@ describe('UniswapV3Factory', () => {
 //   let loadFixture: ReturnType<typeof createFixtureLoader>
   before('create fixture loader', async () => {
     // ;[wallet, other] = await (ethers as any).getSigners()
-    const provider = Provider.getDefaultProvider()
-    wallet = new Wallet(PRIVATE_KEY, provider)
-    other = Wallet.createRandom().connect(provider)
-    const tx = await wallet.transfer({ to: other.address, amount: utils.parseEther("1") })
-    await tx.wait()
+    ;[wallet, other] = await getSigners()
 
     // loadFixture = createFixtureLoader([wallet, other])
   })
 
   before('load pool bytecode', async () => {
     // poolBytecode = (await ethers.getContractFactory('UniswapV3Pool')).bytecode
-    const deployer = new Deployer(hre, wallet)
-    poolBytecode = (await deployer.loadArtifact("UniswapV3Pool")).bytecode
+    poolBytecode = (await getContractFactory('UniswapV3Pool')).bytecode
   })
 
   beforeEach('deploy factory', async () => {
@@ -67,7 +59,7 @@ describe('UniswapV3Factory', () => {
 
   it('pool bytecode size', async () => {
     await factory.createPool(TEST_ADDRESSES[0], TEST_ADDRESSES[1], FeeAmount.MEDIUM)
-    const poolAddress = await getCreate2Address(factory, TEST_ADDRESSES, FeeAmount.MEDIUM, poolBytecode)
+    const poolAddress = await getCreate2Address(factory.address, TEST_ADDRESSES, FeeAmount.MEDIUM, poolBytecode)
     expect(((await waffle.provider.getCode(poolAddress)).length - 2) / 2).to.matchSnapshot()
   })
 
@@ -82,14 +74,12 @@ describe('UniswapV3Factory', () => {
     feeAmount: FeeAmount,
     tickSpacing: number = TICK_SPACINGS[feeAmount]
   ) {
-    // const create = factory.createPool(tokens[0], tokens[1], feeAmount)
-    tx = await factory.createPool(tokens[0], tokens[1], feeAmount)
-    await tx.wait()
-    const create2Address = await getCreate2Address(factory, tokens, feeAmount, poolBytecode)
+    const create = factory.createPool(tokens[0], tokens[1], feeAmount)
+    const create2Address = await getCreate2Address(factory.address, tokens, feeAmount, poolBytecode)
 
-    // await expect(create)
-    //   .to.emit(factory, 'PoolCreated')
-    //   .withArgs(TEST_ADDRESSES[0], TEST_ADDRESSES[1], feeAmount, tickSpacing, create2Address)
+    await expect(create)
+      .to.emit(factory, 'PoolCreated')
+      .withArgs(TEST_ADDRESSES[0], TEST_ADDRESSES[1], feeAmount, tickSpacing, create2Address)
 
     await expect(factory.createPool(tokens[0], tokens[1], feeAmount)).to.be.reverted
     await expect(factory.createPool(tokens[1], tokens[0], feeAmount)).to.be.reverted
@@ -97,9 +87,7 @@ describe('UniswapV3Factory', () => {
     expect(await factory.getPool(tokens[1], tokens[0], feeAmount), 'getPool in reverse').to.eq(create2Address)
 
     // const poolContractFactory = await ethers.getContractFactory('UniswapV3Pool')
-    const deployer = new Deployer(hre, wallet)
-    const artifact = await deployer.loadArtifact("UniswapV3Pool")
-    const poolContractFactory = new ContractFactory(artifact.abi, artifact.bytecode, wallet)
+    const poolContractFactory = await getContractFactory('UniswapV3Pool')
     const pool = poolContractFactory.attach(create2Address)
     expect(await pool.factory(), 'pool factory address').to.eq(factory.address)
     expect(await pool.token0(), 'pool token0').to.eq(TEST_ADDRESSES[0])
@@ -140,9 +128,9 @@ describe('UniswapV3Factory', () => {
       await expect(factory.createPool(TEST_ADDRESSES[0], TEST_ADDRESSES[1], 250)).to.be.reverted
     })
 
-    // it('gas', async () => {
-    //   await snapshotGasCost(factory.createPool(TEST_ADDRESSES[0], TEST_ADDRESSES[1], FeeAmount.MEDIUM))
-    // })
+    it('gas', async () => {
+      await snapshotGasCost(factory.createPool(TEST_ADDRESSES[0], TEST_ADDRESSES[1], FeeAmount.MEDIUM))
+    })
   })
 
   describe('#setOwner', () => {

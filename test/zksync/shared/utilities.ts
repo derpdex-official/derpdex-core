@@ -6,7 +6,8 @@ import { MockTimeUniswapV3Pool } from '../../../typechain/MockTimeUniswapV3Pool'
 import { UniswapV3Factory } from '../../../typechain/UniswapV3Factory'
 import { TestERC20 } from '../../../typechain/TestERC20'
 
-import { Wallet } from 'zksync-web3'
+import { Wallet, utils as zkUtils } from 'zksync-web3'
+let tx
 
 export const MaxUint128 = BigNumber.from(2).pow(128).sub(1)
 
@@ -39,16 +40,16 @@ export function expandTo18Decimals(n: number): BigNumber {
 
 // zkevm deterministic address work differently with evm
 export async function getCreate2Address(
-  factory: UniswapV3Factory,
+  factoryAddress: string,
   [tokenA, tokenB]: [string, string],
   fee: number,
   bytecode: string
 ): Promise<string> {
-  // const [token0, token1] = tokenA.toLowerCase() < tokenB.toLowerCase() ? [tokenA, tokenB] : [tokenB, tokenA]
-  // const constructorArgumentsEncoded = utils.defaultAbiCoder.encode(
-  //   ['address', 'address', 'uint24'],
-  //   [token0, token1, fee]
-  // )
+  const [token0, token1] = tokenA.toLowerCase() < tokenB.toLowerCase() ? [tokenA, tokenB] : [tokenB, tokenA]
+  const constructorArgumentsEncoded = utils.defaultAbiCoder.encode(
+    ['address', 'address', 'uint24'],
+    [token0, token1, fee]
+  )
   // const create2Inputs = [
   //   '0xff',
   //   factoryAddress,
@@ -59,7 +60,15 @@ export async function getCreate2Address(
   // ]
   // const sanitizedInputs = `0x${create2Inputs.map((i) => i.slice(2)).join('')}`
   // return utils.getAddress(`0x${utils.keccak256(sanitizedInputs).slice(-40)}`)
-  return await factory.getPool(tokenA, tokenB, fee)
+  const prefix = utils.keccak256(utils.toUtf8Bytes('zksyncCreate2'))
+  const inputHash = utils.keccak256("0x")
+  const salt = utils.keccak256(constructorArgumentsEncoded)
+  const addressBytes = utils
+    .keccak256(utils.concat([prefix, utils.zeroPad(factoryAddress, 32), salt, zkUtils.hashBytecode(bytecode), inputHash]))
+    .slice(26)
+  return utils.getAddress(addressBytes)
+
+  // return await factory.getPool(tokenA, tokenB, fee)
 }
 
 bn.config({ EXPONENTIAL_AT: 999999, DECIMAL_PLACES: 40 })
@@ -127,7 +136,7 @@ export async function createPoolFunctions({
   ): Promise<ContractTransaction> {
     const method = inputToken === token0 ? swapTarget.swapToLowerSqrtPrice : swapTarget.swapToHigherSqrtPrice
 
-    const tx = await inputToken.approve(swapTarget.address, constants.MaxUint256)
+    tx = await inputToken.approve(swapTarget.address, constants.MaxUint256)
     await tx.wait()
 
     const toAddress = typeof to === 'string' ? to : to.address
@@ -159,7 +168,8 @@ export async function createPoolFunctions({
         sqrtPriceLimitX96 = MAX_SQRT_RATIO.sub(1)
       }
     }
-    await inputToken.approve(swapTarget.address, constants.MaxUint256)
+    tx = await inputToken.approve(swapTarget.address, constants.MaxUint256)
+    await tx.wait()
 
     const toAddress = typeof to === 'string' ? to : to.address
 

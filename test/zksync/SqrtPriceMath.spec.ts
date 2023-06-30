@@ -1,4 +1,4 @@
-import ethers, { BigNumber, constants } from 'ethers'
+import { BigNumber, constants } from 'ethers'
 // import { ethers } from 'hardhat'
 import { SqrtPriceMathTest } from '../../typechain/SqrtPriceMathTest'
 
@@ -6,7 +6,7 @@ import { expect } from './shared/expect'
 import snapshotGasCost from './shared/snapshotGasCost'
 import { encodePriceSqrt, expandTo18Decimals, MaxUint128 } from './shared/utilities'
 
-import getContractInstance from './shared/getContractInstance'
+import { getContractFactory } from './shared/zkUtils'
 
 // const {
 //   constants: { MaxUint256 },
@@ -16,8 +16,8 @@ describe('SqrtPriceMath', () => {
   let sqrtPriceMath: SqrtPriceMathTest
   before(async () => {
     // const sqrtPriceMathTestFactory = await ethers.getContractFactory('SqrtPriceMathTest')
-    // sqrtPriceMath = (await sqrtPriceMathTestFactory.deploy()) as SqrtPriceMathTest
-    sqrtPriceMath = (await getContractInstance("SqrtPriceMathTest")) as SqrtPriceMathTest
+    const sqrtPriceMathTestFactory = await getContractFactory('SqrtPriceMathTest')
+    sqrtPriceMath = (await sqrtPriceMathTestFactory.deploy()) as SqrtPriceMathTest
   })
 
   describe('#getNextSqrtPriceFromInput', () => {

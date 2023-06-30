@@ -3,7 +3,7 @@ import { BitMathTest } from '../../typechain/BitMathTest'
 import { ethers, waffle } from 'hardhat'
 import snapshotGasCost from './shared/snapshotGasCost'
 
-import getContractInstance from './shared/getContractInstance'
+import { getContractFactory } from './shared/zkutils'
 
 const { BigNumber } = ethers
 
@@ -11,8 +11,8 @@ describe('BitMath', () => {
   let bitMath: BitMathTest
   const fixture = async () => {
     // const factory = await ethers.getContractFactory('BitMathTest')
-    // return (await factory.deploy()) as BitMathTest
-    return await getContractInstance("BitMathTest") as BitMathTest
+    const factory = await getContractFactory('BitMathTest')
+    return (await factory.deploy()) as BitMathTest
   }
   beforeEach('deploy BitMathTest', async () => {
     // bitMath = await waffle.loadFixture(fixture)

@@ -4,7 +4,7 @@ import { TickTest } from '../../typechain/TickTest'
 import { expect } from './shared/expect'
 import { FeeAmount, getMaxLiquidityPerTick, TICK_SPACINGS } from './shared/utilities'
 
-import getContractInstance from './shared/getContractInstance'
+import { getContractFactory } from './shared/zkUtils'
 
 const MaxUint128 = BigNumber.from(2).pow(128).sub(1)
 
@@ -15,8 +15,8 @@ describe('Tick', () => {
 
   beforeEach('deploy TickTest', async () => {
     // const tickTestFactory = await ethers.getContractFactory('TickTest')
-    // tickTest = (await tickTestFactory.deploy()) as TickTest
-    tickTest = (await getContractInstance("TickTest")) as TickTest
+    const tickTestFactory = await getContractFactory('TickTest')
+    tickTest = (await tickTestFactory.deploy()) as TickTest
   })
 
   describe('#tickSpacingToMaxLiquidityPerTick', () => {

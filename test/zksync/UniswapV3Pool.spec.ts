@@ -35,8 +35,7 @@ import { SwapMathTest } from '../../typechain/SwapMathTest'
 const createFixtureLoader = waffle.createFixtureLoader
 
 import { Provider, Wallet } from 'zksync-web3'
-import { PRIVATE_KEY } from './shared/constants'
-import getContractInstance from './shared/getContractInstance'
+import { getContractFactory, getSigners } from './shared/zkUtils'
 
 type ThenArg<T> = T extends PromiseLike<infer U> ? U : T
 let tx
@@ -74,17 +73,13 @@ describe('UniswapV3Pool', () => {
 
   before('create fixture loader', async () => {
     // ;[wallet, other] = await (ethers as any).getSigners()
+    ;[wallet, other] = await getSigners()
     // loadFixture = createFixtureLoader([wallet, other])
-    const provider = Provider.getDefaultProvider()
-    wallet = new Wallet(PRIVATE_KEY, provider)
-    other = Wallet.createRandom().connect(provider)
-    const tx = await wallet.transfer({ to: other.address, amount: utils.parseEther("1") })
-    await tx.wait()
   })
 
   beforeEach('deploy fixture', async () => {
     // ;({ token0, token1, token2, factory, createPool, swapTargetCallee: swapTarget } = await loadFixture(poolFixture))
-    ;({ token0, token1, token2, factory, createPool, swapTargetCallee: swapTarget } = await poolFixture())
+    ;({ token0, token1, token2, factory, createPool, swapTargetCallee: swapTarget } = await poolFixture([wallet], Provider.getDefaultProvider()))
 
     const oldCreatePool = createPool
     createPool = async (_feeAmount, _tickSpacing) => {
@@ -1509,9 +1504,9 @@ describe('UniswapV3Pool', () => {
   it('tick transition cannot run twice if zero for one swap ends at fractional price just below tick', async () => {
     pool = await createPool(FeeAmount.MEDIUM, 1)
     // const sqrtTickMath = (await (await ethers.getContractFactory('TickMathTest')).deploy()) as TickMathTest
-    const sqrtTickMath = (await getContractInstance("TickMathTest")) as TickMathTest
+    const sqrtTickMath = (await (await getContractFactory('TickMathTest')).deploy()) as TickMathTest
     // const swapMath = (await (await ethers.getContractFactory('SwapMathTest')).deploy()) as SwapMathTest
-    const swapMath = (await getContractInstance("SwapMathTest")) as SwapMathTest
+    const swapMath = (await (await getContractFactory('SwapMathTest')).deploy()) as SwapMathTest
     const p0 = (await sqrtTickMath.getSqrtRatioAtTick(-24081)).add(1)
     // initialize at a price of ~0.3 token1/token0
     // meaning if you swap in 2 token0, you should end up getting 0 token1
@@ -1873,7 +1868,9 @@ describe('UniswapV3Pool', () => {
       // const reentrant = (await (
       //   await ethers.getContractFactory('TestUniswapV3ReentrantCallee')
       // ).deploy()) as TestUniswapV3ReentrantCallee
-      const reentrant = await getContractInstance("TestUniswapV3ReentrantCallee") as TestUniswapV3ReentrantCallee
+      const reentrant = (await (
+        await getContractFactory('TestUniswapV3ReentrantCallee')
+      ).deploy()) as TestUniswapV3ReentrantCallee
 
       // the tests happen in solidity
       await expect(reentrant.swapToReenter(pool.address)).to.be.revertedWith('Unable to reenter')
@@ -2220,8 +2217,8 @@ describe('UniswapV3Pool', () => {
     let underpay: TestUniswapV3SwapPay
     beforeEach('deploy swap test', async () => {
       // const underpayFactory = await ethers.getContractFactory('TestUniswapV3SwapPay')
-      // underpay = (await underpayFactory.deploy()) as TestUniswapV3SwapPay
-      underpay = (await getContractInstance("TestUniswapV3SwapPay")) as TestUniswapV3SwapPay
+      const underpayFactory = await getContractFactory('TestUniswapV3SwapPay')
+      underpay = (await underpayFactory.deploy()) as TestUniswapV3SwapPay
       tx = await token0.approve(underpay.address, constants.MaxUint256)
       await tx.wait()
       tx = await token1.approve(underpay.address, constants.MaxUint256)

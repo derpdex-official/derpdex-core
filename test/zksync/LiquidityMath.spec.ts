@@ -3,7 +3,7 @@ import { LiquidityMathTest } from '../../typechain/LiquidityMathTest'
 import { ethers, waffle } from 'hardhat'
 import snapshotGasCost from './shared/snapshotGasCost'
 
-import getContractInstance from './shared/getContractInstance'
+import { getContractFactory } from './shared/zkUtils'
 
 const { BigNumber } = ethers
 
@@ -11,8 +11,8 @@ describe('LiquidityMath', () => {
   let liquidityMath: LiquidityMathTest
   const fixture = async () => {
     // const factory = await ethers.getContractFactory('LiquidityMathTest')
-    // return (await factory.deploy()) as LiquidityMathTest
-    return (await getContractInstance("LiquidityMathTest")) as LiquidityMathTest
+    const factory = await getContractFactory('LiquidityMathTest')
+    return (await factory.deploy()) as LiquidityMathTest
   }
   beforeEach('deploy LiquidityMathTest', async () => {
     // liquidityMath = await waffle.loadFixture(fixture)

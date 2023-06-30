@@ -3,7 +3,7 @@ import { FullMathTest } from '../../typechain/FullMathTest'
 import { expect } from './shared/expect'
 import { Decimal } from 'decimal.js'
 
-import getContractInstance from './shared/getContractInstance'
+import { getContractFactory } from './shared/zkUtils'
 
 const { BigNumber, constants: { MaxUint256 }, } = ethers
 const Q128 = BigNumber.from(2).pow(128)
@@ -14,8 +14,8 @@ describe('FullMath', () => {
   let fullMath: FullMathTest
   before('deploy FullMathTest', async () => {
     // const factory = await ethers.getContractFactory('FullMathTest')
-    // fullMath = (await factory.deploy()) as FullMathTest
-    fullMath = (await getContractInstance("FullMathTest")) as FullMathTest
+    const factory = await getContractFactory('FullMathTest')
+    fullMath = (await factory.deploy()) as FullMathTest
   })
 
   describe('#mulDiv', () => {
