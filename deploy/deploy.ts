@@ -27,6 +27,9 @@ export default async function (hre: HardhatRuntimeEnvironment) {
 
     console.log("Deploying contract...");
     let factoryContract = await deployer.deploy(artifact, []);
+    
+    console.log('Waiting for 15 confirmations')
+    await factoryContract.deployTransaction.wait(15)
 
     //@ts-ignore
     const contractAddress = factoryContract.address;
@@ -42,4 +45,10 @@ export default async function (hre: HardhatRuntimeEnvironment) {
     // await factoryContract.createPool(USDC.address, WBTC.address, 3000)
     // console.log("Contract deployed");
 
+    console.log("staring verification")
+    console.log("verifying Factory")
+    await hre.run("verify:verify", {
+        address: contractAddress,
+        constructorArguments: [],
+    })
 }
