@@ -4,7 +4,7 @@
 
 | Contract | Testnet | Mainnet |
 | --- | --- | --- |
-| `Factory` | [`0x9C260E394a96BB3E6836dAE8B9f2075D0b128e83`](https://goerli.explorer.zksync.io/address/0x9C260E394a96BB3E6836dAE8B9f2075D0b128e83) | [`0x770f35757eC4E92D99ae49c1759DEbD97A1ABf6b`](https://explorer.zksync.io/address/0x770f35757eC4E92D99ae49c1759DEbD97A1ABf6b) |
+| `Factory` | [`0x9C260E394a96BB3E6836dAE8B9f2075D0b128e83`](https://goerli.explorer.zksync.io/address/0x9C260E394a96BB3E6836dAE8B9f2075D0b128e83) | [`0x52A1865eb6903BC777A02Ae93159105015CA1517`](https://explorer.zksync.io/address/0x52A1865eb6903BC777A02Ae93159105015CA1517) |
 | `USDC` | [`0x46caA59e33FEb040442CC9722922260cBdDb3F6F`](https://goerli.explorer.zksync.io/address/0x46caA59e33FEb040442CC9722922260cBdDb3F6F) | - |
 | `WBTC` | [`0xE6E3854A3dF24043890BB5376DEbFA178C56a011`](https://goerli.explorer.zksync.io/address/0xE6E3854A3dF24043890BB5376DEbFA178C56a011) | - |
 
