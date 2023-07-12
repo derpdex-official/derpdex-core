@@ -1,3 +1,0 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
-
-exports[`UniswapV3Factory #createPool gas 1`] = `263460`;
