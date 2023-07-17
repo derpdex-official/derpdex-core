@@ -37,7 +37,7 @@ to be eligible for the bug bounty:
 
 ## Rewards
 
-Rewards will be allocated based on the severity of the bug disclosed and will be evaluated and rewarded at the discretion of the Uniswap Labs team. For critical bugs that lead to any loss of LP funds, rewards of up to 1% of $DERP will be granted. Lower severity bugs will be rewarded at the discretion of the team. 
+Rewards will be allocated based on the severity of the bug disclosed and will be evaluated and rewarded at the discretion of the DerpDEX team. For critical bugs that lead to any loss of LP funds, rewards of up to 1% of $DERP will be granted. Lower severity bugs will be rewarded at the discretion of the team. 
 
 ## Disclosure
 
