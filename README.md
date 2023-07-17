@@ -1,12 +1,14 @@
 # Core Contracts
+This repository contains the core smart contracts for the DerpDEX Protocol. For higher level contracts, see the (derpdex-periphery)[https://github.com/derpdex-official/derpdex-periphery] repository.
+
+## Bug bounty
+This repository is subject to the DerpDEX bug bounty program, per the terms defined (here)[bug-bounty.md].
 
 ## Addresses
 
 | Contract | Testnet | Mainnet |
 | --- | --- | --- |
 | `Factory` | [`0x9C260E394a96BB3E6836dAE8B9f2075D0b128e83`](https://goerli.explorer.zksync.io/address/0x9C260E394a96BB3E6836dAE8B9f2075D0b128e83) | [`0x52A1865eb6903BC777A02Ae93159105015CA1517`](https://explorer.zksync.io/address/0x52A1865eb6903BC777A02Ae93159105015CA1517) |
-| `USDC` | [`0x46caA59e33FEb040442CC9722922260cBdDb3F6F`](https://goerli.explorer.zksync.io/address/0x46caA59e33FEb040442CC9722922260cBdDb3F6F) | - |
-| `WBTC` | [`0xE6E3854A3dF24043890BB5376DEbFA178C56a011`](https://goerli.explorer.zksync.io/address/0xE6E3854A3dF24043890BB5376DEbFA178C56a011) | - |
 
 ## Deploy
 
