@@ -1,8 +1,8 @@
 # Core Contracts
-This repository contains the core smart contracts for the DerpDEX Protocol. For higher level contracts, see the (derpdex-periphery)[https://github.com/derpdex-official/derpdex-periphery] repository.
+This repository contains the core smart contracts for the DerpDEX Protocol. For higher level contracts, see the [derpdex-periphery](https://github.com/derpdex-official/derpdex-periphery) repository.
 
 ## Bug bounty
-This repository is subject to the DerpDEX bug bounty program, per the terms defined (here)[bug-bounty.md].
+This repository is subject to the DerpDEX bug bounty program, per the terms defined [here](bug-bounty.md).
 
 ## Addresses
 
