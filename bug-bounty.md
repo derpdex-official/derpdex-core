@@ -12,7 +12,7 @@ The scope of the Program is limited to bugs that result in the draining of contr
 
 The following are not within the scope of the Program:
 
-- Any contract located under [contracts/test](./contracts/test) and [test](./test).
+- Any contract located under [contracts/test](./contracts/test).
 - Bugs in any third party contract or platform that interacts with DerpDEX.
 - Vulnerabilities already reported and/or discovered in contracts built by third parties on DerpDEX.
 - Any already-reported bugs.
